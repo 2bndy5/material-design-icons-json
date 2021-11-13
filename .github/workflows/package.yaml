@@ -1,0 +1,34 @@
+name: Pack Icons into JSON
+
+runs:
+  on: ubuntu-latest
+
+  jobs:
+    packaging:
+      steps:
+        - name: checkout this repo
+          uses: actions/checkout@v2
+        - name: checkout material icons repo
+          uses: actions/checkout@v2
+          with:
+            # Need full history to determine version number.
+            fetch-depth: 0
+            repository: google/material-design-icons
+            path: md-icons
+        - name: describe icons version & and commit sha
+          working-directory: md-icons
+          id: md-icon-version
+          run: |
+            echo ::set-output name=tag::$(git describe --dirty)
+            echo ::set-output name=sha::$(git rev-parse --short HEAD)
+        - name: setup python
+          uses: actions/setup-python@v2
+        - name: compile the json files
+        - run: |
+            mkdir compiled
+            python walk_svg_to_json.py --path=md-icons
+        - name: Save artifacts
+          uses: actions/upload-artifact@v2
+          with:
+            name: compiled-${{ steps.md-icon-version.outputs.tag }}.${{ steps.md-icon-version.outputs.sha }}
+            path: compiled/
