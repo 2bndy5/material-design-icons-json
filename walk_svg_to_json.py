@@ -53,6 +53,7 @@ def parse_material_svg(file_path: str, src_path: str):
                 "width": int(svg_width),
                 "path": svg_path,
             }
+            duplicates.append(file_path)
     else:
         dicts[scheme][name] = {
             "name": name,
@@ -128,8 +129,10 @@ arg_parser.add_argument(
 if __name__ == "__main__":
 
     args = arg_parser.parse_args()
+    print(f"::group::Processed Categories/Icons")
     start_timer = time.monotonic()
     total = walk_material_srcs(args.path)
+    print("::endgroup::")
     export_material_jsons()
     end_timer = time.monotonic()
     crate_attribution()
