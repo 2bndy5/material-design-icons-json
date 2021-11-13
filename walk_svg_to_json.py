@@ -1,7 +1,9 @@
 """A python script to aggregate the Material Design Icons (v4.0.0+) from SVG sources
 into several compiled JSON files. Each JSON file will have all the icons available for
 a specific style (regular, round, sharp, outlined, twotone)."""
+from posixpath import dirname
 import time
+import datetime
 import os
 import argparse
 import re
@@ -64,10 +66,16 @@ def walk_material_srcs(src_path: str = ".") -> int:
     """
     total = 0
     src_path += os.sep
-    for path_name, _, filenames in os.walk(src_path + "src"):
+    category = ""
+    for path_name, dirnames, filenames in os.walk(src_path + "src"):
+        if not dirnames:
+            new_category = path_name.split(os.sep)[-3]
+            if category != new_category:
+                category = new_category
+                print("parsing category", category)
         for filename in filenames:
             file_path = os.path.join(path_name, filename)
-            print("parsing", file_path)
+            # print("parsing", file_path)
             parse_material_svg(file_path, src_path)
             total += 1
     return total
@@ -84,10 +92,11 @@ def export_material_jsons():
 def crate_attribution():
     """Create an updated copyright notice for re-distribution."""
     license = []
-    with open("License", "rb") as og_license:
+    with open("LICENSE", "rb") as og_license:
         license = og_license.readlines()
-    now = time.localtime()
+    now = time.gmtime()
     year = str(now[0])
+    print("Timestamping attribution notice")
     with open("compiled/material-icons_LICENSE", "wb") as dist_license:
         found_attribution = False
         for line in license:

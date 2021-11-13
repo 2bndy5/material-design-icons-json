@@ -20,7 +20,7 @@ jobs:
         working-directory: md-icons
         id: md-icon-version
         run: |
-          echo ::set-output name=tag::$(git describe --dirty)
+          echo ::set-output name=tag::$(git describe --tags)
           echo ::set-output name=sha::$(git rev-parse --short HEAD)
       - name: setup python
         uses: actions/setup-python@v2
