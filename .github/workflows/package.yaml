@@ -1,5 +1,6 @@
 name: Pack Icons into JSON
 
+on: [push]
 
 jobs:
   packaging:
