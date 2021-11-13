@@ -15,7 +15,7 @@ duplicates = []
 
 PATH_SEARCH = re.compile("<(\w{4,})(.*?)/>")
 
-def parse_material_svg(file_path: str):
+def parse_material_svg(file_path: str, src_path: str):
     """ "Import xml data from a named SVG asset.
 
     :param str file_path: path and name of SVG asset. For Example:
@@ -34,7 +34,8 @@ def parse_material_svg(file_path: str):
         return
     data.unlink()
     # src_info example: [social, whatshot, materialicons]
-    category, name, scheme = file_path.split(os.sep)[1:-1]
+    path_name = file_path.replace(src_path, "")
+    category, name, scheme = path_name.split(os.sep)[1:-1]
     scheme = scheme.replace("materialicons", "")
     if not scheme:
         scheme = "regular"
@@ -65,10 +66,9 @@ def walk_material_srcs(src_path: str = ".") -> int:
     src_path += os.sep
     for path_name, _, filenames in os.walk(src_path + "src"):
         for filename in filenames:
-            path_name = path_name.replace(src_path, "")
             file_path = os.path.join(path_name, filename)
             print("parsing", file_path)
-            parse_material_svg(file_path)
+            parse_material_svg(file_path, src_path)
             total += 1
     return total
 
