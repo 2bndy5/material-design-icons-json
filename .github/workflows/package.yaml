@@ -1,7 +1,10 @@
 name: Pack Icons into JSON
 
-on: [push]
-
+on: 
+  push:
+  schedule:
+      # * is a special character in YAML so you have to quote this string
+      - cron:  '* * 1 * *'
 jobs:
   packaging:
     runs-on: ubuntu-latest
@@ -19,9 +22,7 @@ jobs:
       - name: describe icons version & and commit sha
         working-directory: md-icons
         id: md-icon-version
-        run: |
-          echo ::set-output name=tag::$(git describe --tags)
-          echo ::set-output name=sha::$(git rev-parse --short HEAD)
+        run: echo ::set-output name=tag::$(git describe --tags --abbrev=6)
       - name: setup python
         uses: actions/setup-python@v2
       - name: compile the json files
@@ -31,5 +32,5 @@ jobs:
       - name: Save artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: compiled-${{ steps.md-icon-version.outputs.tag }}.${{ steps.md-icon-version.outputs.sha }}
+          name: compiled-v${{ steps.md-icon-version.outputs.tag }}
           path: compiled/

@@ -20,8 +20,9 @@ PATH_SEARCH = re.compile("<(\w{4,})(.*?)/>")
 def parse_material_svg(file_path: str, src_path: str):
     """ "Import xml data from a named SVG asset.
 
-    :param str file_path: path and name of SVG asset. For Example:
+    :param str file_path: The path and name of SVG asset. For Example:
         src/social/whatshot/materialicons/24px.svg
+    :returns: A 2-tuple containing the icon's category & name
     """
     data = minidom.parse(file_path)  # type: Document
     svg_tag = data.getElementsByTagName("svg")[0]  # type: Element
@@ -35,9 +36,10 @@ def parse_material_svg(file_path: str, src_path: str):
         skipped.append(file_path)
         return
     data.unlink()
-    # src_info example: [social, whatshot, materialicons]
-    path_name = file_path.replace(src_path, "")
-    category, name, scheme = path_name.split(os.sep)[1:-1]
+
+    path_name = file_path.replace(src_path + os.sep, "")
+    # category, name, scheme = [social, whatshot, materialicons]
+    category, name, scheme = path_name.split(os.sep)[:-1]
     scheme = scheme.replace("materialicons", "")
     if not scheme:
         scheme = "regular"
@@ -57,26 +59,29 @@ def parse_material_svg(file_path: str, src_path: str):
             "keywords": [category],
             "heights": {svg_height: {"width": int(svg_width), "path": svg_path}},
         }
+    return (category, name)
 
 
 def walk_material_srcs(src_path: str = ".") -> int:
     """Walk the src tree of SVG assets and return the total count.
     
     :param str src_path: The root folder containing the icons' 'src' directory.
+    :returns: The total number of icons parsed (includes duplicates from different sizes
+        for same icons).
     """
     total = 0
-    src_path += os.sep
-    category = ""
-    for path_name, dirnames, filenames in os.walk(src_path + "src"):
-        if not dirnames:
-            new_category = path_name.split(os.sep)[-3]
-            if category != new_category:
-                category = new_category
-                print("parsing category", category)
+    src_path += os.sep + "src"
+    category, name = ("", "")
+    for path_name, dirnames, filenames in os.walk(src_path):
         for filename in filenames:
             file_path = os.path.join(path_name, filename)
-            # print("parsing", file_path)
-            parse_material_svg(file_path, src_path)
+            new_category, icon_name = parse_material_svg(file_path, src_path)
+            if category != new_category:
+                category = new_category
+                print("parsing category:", category)
+            if icon_name != name:
+                name = icon_name
+                print("\ticon:", name)
             total += 1
     return total
 
