@@ -1,5 +1,7 @@
 # material-design-icons-json
 
+[![Pack Icons into JSON](https://github.com/2bndy5/material-design-icons-json/actions/workflows/package.yaml/badge.svg)](https://github.com/2bndy5/material-design-icons-json/actions/workflows/package.yaml)
+
 ## What
 
 A python script to aggregate the
