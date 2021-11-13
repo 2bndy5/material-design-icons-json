@@ -24,7 +24,7 @@ jobs:
       - name: setup python
         uses: actions/setup-python@v2
       - name: compile the json files
-      - run: |
+        run: |
           mkdir compiled
           python walk_svg_to_json.py --path=md-icons
       - name: Save artifacts
