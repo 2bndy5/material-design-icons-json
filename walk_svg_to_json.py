@@ -94,6 +94,7 @@ def export_material_jsons():
         with open("compiled/" + json_name, "w", encoding="utf-8") as json_file:
             print(f"dumping {json_name}")
             json.dump(icon_info, json_file, indent=2)
+            json_file.write("\n")
 
 def crate_attribution():
     """Create an updated copyright notice for re-distribution."""
