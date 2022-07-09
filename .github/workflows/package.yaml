@@ -5,6 +5,8 @@ on:
   schedule:
       # * is a special character in YAML so you have to quote this string
       - cron:  '0 0 1 * *'
+  workflow_dispatch:
+
 jobs:
   packaging:
     runs-on: ubuntu-latest
@@ -22,13 +24,20 @@ jobs:
       - name: describe icons version & and commit sha
         working-directory: md-icons
         id: md-icon-version
-        run: echo ::set-output name=tag::$(git describe --tags --abbrev=6)
+        run: |
+          echo ::set-output name=tag::$(git describe --tags --abbrev=6)
+          echo ::set-output name=sha::$(git rev-parse HEAD)
       - name: setup python
         uses: actions/setup-python@v2
       - name: compile the json files
         run: |
           mkdir compiled
           python walk_svg_to_json.py --path=md-icons
+      - name: create version file
+        run: |
+          echo "using github.com/google/material-design-icons" >> compiled/material-icons_VERSION.txt
+          echo "v${{ steps.md-icon-version.outputs.tag }}" >> compiled/material-icons_VERSION.txt
+          echo "${{ steps.md-icon-version.outputs.sha }}" >> compiled/material-icons_VERSION.txt
       - name: Save artifacts
         uses: actions/upload-artifact@v2
         with:

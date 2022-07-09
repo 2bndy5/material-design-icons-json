@@ -103,7 +103,7 @@ def crate_attribution():
         license = og_license.readlines()
     now = time.gmtime()
     year = str(now[0])
-    print("Timestamping attribution notice")
+    print("Time-stamping attribution notice")
     with open("compiled/material-icons_LICENSE", "wb") as dist_license:
         found_attribution = False
         for line in license:
