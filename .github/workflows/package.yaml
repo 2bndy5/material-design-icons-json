@@ -13,26 +13,31 @@ jobs:
 
     steps:
       - name: checkout this repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: checkout material icons repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # Need full history to determine version number.
           fetch-depth: 0
           repository: google/material-design-icons
           path: md-icons
+      - name: checkout sphinx-design repo
+        uses: actions/checkout@v3
+        with:
+          repository: executablebooks/sphinx-design
+          path: sphinx-design
       - name: describe icons version & and commit sha
         working-directory: md-icons
         id: md-icon-version
         run: |
           echo ::set-output name=tag::$(git describe --tags --abbrev=6)
           echo ::set-output name=sha::$(git rev-parse HEAD)
-      - name: setup python
-        uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x' 
       - name: compile the json files
-        run: |
-          mkdir compiled
-          python walk_svg_to_json.py --path=md-icons
+        id: compiled
+        run: python walk_svg_to_json.py --path=md-icons
       - name: create version file
         run: |
           echo "using github.com/google/material-design-icons" >> compiled/material-icons_VERSION.txt
