@@ -37,10 +37,10 @@ def parse_material_svg(file_path: str, src_path: str):
         svg_path, count = re.subn(PATH_SEARCH, r"<\1\2></\1>", svg_path)
     svg_height: str = svg_tag.getAttribute("height")
     svg_width: str = svg_tag.getAttribute("width")
+    data.unlink()
     if not svg_height.isnumeric() or not svg_width.isnumeric():
         skipped.append(file_path)
         return
-    data.unlink()
 
     path_name = file_path.replace(src_path + os.sep, "")
     # category, name, scheme = [social, whatshot, materialicons]
@@ -122,7 +122,8 @@ def crate_attribution():
 def compare_json():
     """Used to compare old compiled JSONs (from sphinx-design repo) with
     newer compiled JSONs."""
-    added, new_sizes, rm_sizes = (0, 0, 0)
+    added, removed, new_sizes, rm_sizes = (0,) * 4
+    added_names, removed_names = ([], [])
     for scheme, icon_info in dicts.items():
         json_name = f"material_{scheme}.json"
         old: dict = json.loads(
@@ -133,18 +134,37 @@ def compare_json():
         for icon_name, info in icon_info.items():
             if icon_name not in old.keys():
                 added += 1
+                added_names.append(f"{scheme}/{icon_name}")
                 continue
             new_icon_sizes = len(info["heights"])
             old_icon_sizes = len(old[icon_name]["heights"])
             new_sizes += new_icon_sizes > old_icon_sizes
             rm_sizes += new_icon_sizes < old_icon_sizes
+        for icon_name in old.keys():
+            # pylint: disable=consider-iterating-dictionary
+            if icon_name not in icon_info.keys():
+                removed += 1
+                removed_names.append(f"{scheme}/{icon_name}")
+            # pylint: enable=consider-iterating-dictionary
     LOGGER.info(
         "::notice title=Summary Comparison::"
-        "%d new icons added. %d icons have new sizes. %d icons' sizes were removed",
+        "%d new icons added. %d icons have new sizes. %d icons' sizes were removed."
+        " %d icons were replaced or removed.",
         added,
         new_sizes,
         rm_sizes,
+        removed,
     )
+    if added_names:
+        LOGGER.debug("::group::New Icon Names")
+        for name in added_names:
+            LOGGER.debug(name)
+        LOGGER.debug("::endgroup::")
+    if removed_names:
+        LOGGER.debug("::group::Removed Icon Names")
+        for name in removed_names:
+            LOGGER.debug(name)
+        LOGGER.debug("::endgroup::")
 
 
 arg_parser = argparse.ArgumentParser(description=__doc__)
@@ -176,6 +196,10 @@ def main():
     export_material_jsons()
     end_timer = time.monotonic()
     crate_attribution()
+    LOGGER.debug("::group::Duplicate Icon Names")
+    for name in duplicates:
+        LOGGER.debug(name)
+    LOGGER.debug("::endgroup::")
     LOGGER.info("json files created in %f seconds.", round(end_timer - start_timer, 3))
     LOGGER.info(
         "::notice title=Summary Compiled::"
