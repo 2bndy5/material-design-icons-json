@@ -30,8 +30,8 @@ jobs:
         working-directory: md-icons
         id: md-icon-version
         run: |
-          echo ::set-output name=tag::$(git describe --tags --abbrev=6)
-          echo ::set-output name=sha::$(git rev-parse HEAD)
+          echo "tag=$(git describe --tags --abbrev=6)" >> $GITHUB_OUTPUT
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
       - uses: actions/setup-python@v4
         with:
           python-version: '3.x' 
@@ -44,7 +44,7 @@ jobs:
           echo "v${{ steps.md-icon-version.outputs.tag }}" >> compiled/material-icons_VERSION.txt
           echo "${{ steps.md-icon-version.outputs.sha }}" >> compiled/material-icons_VERSION.txt
       - name: Save artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: compiled-v${{ steps.md-icon-version.outputs.tag }}
           path: compiled/
