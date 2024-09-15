@@ -13,16 +13,20 @@ jobs:
 
     steps:
       - name: checkout this repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: checkout material icons repo
-        uses: actions/checkout@v3
-        with:
-          # Need full history to determine version number.
-          fetch-depth: 0
-          repository: google/material-design-icons
-          path: md-icons
+        # We only need the SVG data.
+        # The rest of the repo history is too big for ubuntu-latest runner.
+        # We also need enought history to `git describe` the version since last tag.
+        # Do a sparse-checkout that only gets SVG data and history on master branch.
+        run: |-
+          git clone --filter=blob:none --no-checkout https://github.com/google/material-design-icons md-icons
+          cd md-icons
+          git sparse-checkout set -cone
+          git checkout master
+          git sparse-checkout set src
       - name: checkout sphinx-design repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: executablebooks/sphinx-design
           path: sphinx-design
@@ -32,7 +36,7 @@ jobs:
         run: |
           echo "tag=$(git describe --tags --abbrev=6)" >> $GITHUB_OUTPUT
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.x' 
       - name: compile the json files
@@ -44,7 +48,7 @@ jobs:
           echo "v${{ steps.md-icon-version.outputs.tag }}" >> compiled/material-icons_VERSION.txt
           echo "${{ steps.md-icon-version.outputs.sha }}" >> compiled/material-icons_VERSION.txt
       - name: Save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: compiled-v${{ steps.md-icon-version.outputs.tag }}
           path: compiled/
