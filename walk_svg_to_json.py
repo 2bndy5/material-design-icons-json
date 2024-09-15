@@ -1,6 +1,7 @@
 """A python script to aggregate the Material Design Icons (v4.0.0+) from SVG sources
 into several compiled JSON files. Each JSON file will have all the icons available for
 a specific style (regular, round, sharp, outlined, twotone)."""
+
 import argparse
 import json
 import logging
@@ -15,7 +16,7 @@ dicts = {"regular": {}, "outlined": {}, "round": {}, "sharp": {}, "twotone": {}}
 skipped = []
 duplicates = []
 
-PATH_SEARCH = re.compile("<(\w{4,})(.*?)/>")
+PATH_SEARCH = re.compile(r"<(\w{4,})(.*?)/>")
 
 logging.basicConfig(format="%(message)s")
 LOGGER = logging.getLogger(__name__)
@@ -93,7 +94,7 @@ def walk_material_srcs(src_path: str = ".") -> int:
 
 
 def export_material_jsons():
-    """Export seperate json files from assembled dicts."""
+    """Export separate json files from assembled dicts."""
     for scheme, icon_info in dicts.items():
         json_name = f"material_{scheme}.json"
         LOGGER.info("dumping %s", json_name)
@@ -111,12 +112,20 @@ def crate_attribution():
     now = time.gmtime()
     year = str(now[0])
     LOGGER.info("Time-stamping attribution notice")
-    for line in icons_license:
+    start = -1
+    for index, line in enumerate(icons_license):
         if b"Copyright [yyyy] [name of copyright owner]" in line:
-            line = line.replace(b"[yyyy]", year.encode("utf-8"))
-            line = line.replace(b"[name of copyright owner]", b"Google")
+            attribution = line.replace(b"[yyyy]", year.encode("utf-8"))
+            icons_license[index] = attribution.replace(
+                b"[name of copyright owner]", b"Google"
+            )
+            start = index
             break
-    Path("compiled/material-icons_LICENSE").write_bytes(b"\n".join(icons_license))
+    if start < 0:
+        raise RuntimeError("Failed to find line in License that begins attribution")
+    Path("compiled/material-icons_LICENSE").write_bytes(
+        b"\n".join(icons_license[start:])
+    )
 
 
 def compare_json():
@@ -124,12 +133,14 @@ def compare_json():
     newer compiled JSONs."""
     added, removed, new_sizes, rm_sizes = (0,) * 4
     added_names, removed_names = ([], [])
+    sphinx_design_src = Path("sphinx-design/sphinx_design/compiled")
+    if not sphinx_design_src.exists():
+        sphinx_design_src = Path("../", sphinx_design_src)
+        assert sphinx_design_src.exists(), "Failed to locate previously compiled json"
     for scheme, icon_info in dicts.items():
         json_name = f"material_{scheme}.json"
         old: dict = json.loads(
-            Path("sphinx-design/sphinx_design/compiled", json_name).read_text(
-                encoding="utf-8"
-            )
+            Path(sphinx_design_src, json_name).read_text(encoding="utf-8")
         )
         for icon_name, info in icon_info.items():
             if icon_name not in old.keys():
@@ -210,7 +221,9 @@ def main():
     )
     compare_json()
     if skipped:
-        LOGGER.debug("::notice title=skipped the following files::%s", ", ".join(skipped))
+        LOGGER.debug(
+            "::notice title=skipped the following files::%s", ", ".join(skipped)
+        )
 
 
 if __name__ == "__main__":
